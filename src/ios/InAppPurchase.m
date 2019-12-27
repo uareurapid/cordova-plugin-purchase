@@ -945,15 +945,45 @@ static NSString *priceLocaleCurrencyCode(NSLocale *priceLocale) {
     // Only thing is: the developper needs to be sure to handle all types of IAP defines on the AppStore.
     // Which should be OK...
     //
-
-    // Let's check if we already loaded this product informations.
-    // Since it's provided to us generously, let's store them here.
+    
     NSString *productId = payment.productIdentifier;
     if (self.products && product && ![self.products objectForKey:productId]) {
+        
+        
         [self.products setObject:product forKey:[NSString stringWithFormat:@"%@", productId]];
+        
+        
+        if(self.products.count == 1) {
+            
+            //introduce a delay
+            dispatch_queue_t delaySimulationThread = dispatch_queue_create("mosalingua_is_loading", nil);
+            dispatch_async(delaySimulationThread, ^{
+                [NSThread sleepForTimeInterval:10.0];
+                //dispatch_async(dispatch_get_main_queue(), ^{
+                
+                //plugin callback code here
+                NSArray *callbackArgs = [NSArray arrayWithObjects: productId, nil];
+                //we pass the productId to the callback and finish handling this inside the app
+                NSString *js = [NSString stringWithFormat:@"window.storekit.redirectionFromStoreDone.apply(window.storekit, %@)",[callbackArgs JSONSerialize]];
+                [self.commandDelegate evalJs: js];
+                //});
+            });
+            
+        }
+        
     }
-
-    return YES;
+    
+    //not sure if this can happen but better do it anyway
+    if(self.products && self.products.count > 1) {
+        
+        NSArray *callbackArgs = [NSArray arrayWithObjects: productId, nil];
+        //we pass the productId to the callback and finish handling this inside the app
+        NSString *js = [NSString stringWithFormat:@"window.storekit.redirectionFromStoreDone.apply(window.storekit, %@)",[callbackArgs JSONSerialize]];
+        
+        [self.commandDelegate evalJs: js];
+    }
+    
+    return NO; //cancel
 }
 
 @end

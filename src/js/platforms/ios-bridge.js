@@ -49,6 +49,7 @@ var initialized = false;
 
 InAppPurchase.prototype.init = function (options, success, error) {
     this.options = {
+        redirectionDone: options.redirectionDone || noop,
         error:    options.error    || noop,
         ready:    options.ready    || noop,
         purchase: options.purchase || noop,
@@ -101,6 +102,9 @@ InAppPurchase.prototype.init = function (options, success, error) {
     };
 
     exec('setup', [], setupOk, setupFailed);
+
+    InAppPurchase.prototype.redirectionFromStoreDone = function (productId) {
+                protectCall(this.options.redirectionDone, 'options.redirectionDone', productId);
 };
 
 /*
